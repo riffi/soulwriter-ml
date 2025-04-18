@@ -1,8 +1,8 @@
 import pymorphy3
-from typing import List, Dict, TypedDict, Any
+from typing import List
 from nltk import ngrams
-from analyzers.types import RepeatDataType, LemmaDataType, WordInfoType, RepeatItemType
-from analyzers.words_extractor import extract_words
+from analyzers.repeats.types import RepeatDataType, WordInfoType
+from analyzers.repeats.words_extractor import extract_words
 
 morph = pymorphy3.MorphAnalyzer()
 

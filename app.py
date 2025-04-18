@@ -3,8 +3,8 @@ import pymorphy3
 from functools import wraps
 from flask_cors import CORS, cross_origin
 
-
-from analyzers.word_repeat_analyzer import get_word_repeats
+from analyzers.clishes.clishe_analyzer import get_cliched_matches
+from analyzers.repeats.word_repeat_analyzer import get_word_repeats
 from generators.case_generator import generate_phrase_cases
 
 app = Flask(__name__)
@@ -67,6 +67,24 @@ def find_repeats():
 
   return jsonify({
     'repeatData': repeat_data,
+  })
+
+
+@app.route('/analyze_cliches', methods=['POST'])
+@cross_origin()
+@token_required
+def analyze_cliches():
+  # Проверяем входные данные
+  data = request.get_json()
+  if not data or 'text' not in data:
+    return jsonify({'error': 'Missing text parameter'}), 400
+
+  text = data['text']
+
+  data = get_cliched_matches(text)
+
+  return jsonify({
+    'data': data,
   })
 
 

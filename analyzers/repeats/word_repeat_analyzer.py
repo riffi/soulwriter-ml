@@ -1,10 +1,10 @@
 # Основная функция для поиска повторяющихся слов в тексте
 from typing import List, Set
 
-from analyzers.types import RepeatDataType
-from analyzers.variants.word_repeat_analyzer_lemm import \
+from analyzers.repeats.types import RepeatDataType
+from analyzers.repeats.variants.word_repeat_analyzer_lemm import \
   get_word_repeats_by_lemm
-from analyzers.variants.word_repeat_analyzer_trigram import \
+from analyzers.repeats.variants.word_repeat_analyzer_trigram import \
   get_word_repeats_by_trigram
 
 

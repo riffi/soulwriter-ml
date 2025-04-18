@@ -1,7 +1,7 @@
 # Функция для извлечения слов из текста
 from typing import List
 
-from analyzers.types import WordInfoType
+from analyzers.repeats.types import WordInfoType
 
 
 def extract_words(text):
