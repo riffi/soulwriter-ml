@@ -35,32 +35,46 @@ def fill_repeat_data(
   for lemma, data in lemmas_dict.items():
     words_list: List[WordInfoType] = data['words']
     is_function_word: bool = data['is_function_word']
-    current_window: int = window_size_tech_words + 1 if is_function_word else window_size + 1
+    current_window: int = window_size_tech_words if is_function_word else window_size
 
-    # Сортируем слова по их позициям в тексте
-    words_list.sort(key=lambda x: x['start'])
+    # Сортируем слова по их позициям
+    sorted_words = sorted(words_list, key=lambda x: x['word_index'])
+    n = len(sorted_words)
+    groups = []
+    start = 0
 
-    repeats: List[WordInfoType] = []
-    for i in range(len(words_list)):
-      for j in range(i + 1, len(words_list)):
-        distance = words_list[j]['word_index'] - words_list[i]['word_index']  # type: ignore
-        if distance <= current_window:
-          if words_list[i] not in repeats:
-            repeats.append(words_list[i])
-          if words_list[j] not in repeats:
-            repeats.append(words_list[j])
+    # Формируем группы через sliding window
+    while start < n:
+      max_end = start
+      # Расширяем окно, пока разница между первым и последним элементом <= current_window
+      while (max_end + 1 < n) and (sorted_words[max_end + 1]['word_index'] - sorted_words[start]['word_index'] <= current_window):
+        max_end += 1
+      # Если группа содержит хотя бы два слова
+      if max_end > start:
+        current_group = sorted_words[start:max_end + 1]
+        groups.append(current_group)
+      start = max_end + 1
 
-    if len(repeats) >= 2:
-      repeats.sort(key=lambda x: x['start'])
-      repeat_data.append({
-        'isFunctionWord': is_function_word,
-        'analyzerName': 'lemm',
-        'repeats': [{
-          'startPosition': w['start'],
-          'endPosition': w['end'],
-          'word': w['original']
-        } for w in repeats]
-      })
+    # Добавляем группы в результат
+    for group in groups:
+      unique_group = []
+      seen_indices = set()
+      # Удаляем дубликаты (на случай, если слова имеют одинаковый индекс)
+      for word in group:
+        idx = word['word_index']
+        if idx not in seen_indices:
+          seen_indices.add(idx)
+          unique_group.append(word)
+      if len(unique_group) >= 2:
+        repeat_data.append({
+          'isFunctionWord': is_function_word,
+          'analyzerName': 'lemm',
+          'repeats': [{
+            'startPosition': w['start'],
+            'endPosition': w['end'],
+            'word': w['original']
+          } for w in unique_group]
+        })
 
 def extract_lemmas(lemmas_dict: Dict[str, LemmaDataType], words_info: List[WordInfoType]) -> None:
   for word_data in words_info:

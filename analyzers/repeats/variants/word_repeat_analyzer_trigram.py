@@ -54,31 +54,47 @@ def cluster_similar_words(words: List[WordInfoType]) -> List[List[WordInfoType]]
 
 def find_repeats_in_clusters(clusters: List[List[WordInfoType]], window_size: int) -> List[RepeatDataType]:
   result = []
+  morph = pymorphy3.MorphAnalyzer()
 
   for cluster in clusters:
     sorted_words = sorted(cluster, key=lambda x: x['word_index'])
-    repeats = []
+    n = len(sorted_words)
+    groups = []
+    start = 0
 
-    for i in range(len(sorted_words)):
-      for j in range(i+1, len(sorted_words)):
-        # Проверяем разницу в количестве слов между позициями
-        if sorted_words[j]['word_index'] - sorted_words[i]['word_index'] <= window_size:
-          if sorted_words[i] not in repeats:
-            repeats.append(sorted_words[i])
-          if sorted_words[j] not in repeats:
-            repeats.append(sorted_words[j])
+    # Формируем группы через sliding window
+    while start < n:
+      max_end = start
+      while (max_end + 1 < n) and (sorted_words[max_end + 1]['word_index'] - sorted_words[start]['word_index'] <= window_size):
+        max_end += 1
+      if max_end > start:
+        current_group = sorted_words[start:max_end + 1]
+        groups.append(current_group)
+      start = max_end + 1
 
-    if len(repeats) >= 2:
-      parsed = morph.parse(repeats[0]['word'])[0]
-      result.append({
-        'isFunctionWord': 'PREP' in parsed.tag or 'CONJ' in parsed.tag or 'PRCL' in parsed.tag,
-        'analyzerName': 'trigram',
-        'repeats': [{
-          'startPosition': w['start'],
-          'endPosition': w['end'],
-          'word': w['original']
-        } for w in sorted(repeats, key=lambda x: x['word_index'])]
-      })
+    # Обрабатываем найденные группы
+    for group in groups:
+      unique_group = []
+      seen_indices = set()
+      for word in group:
+        idx = word['word_index']
+        if idx not in seen_indices:
+          seen_indices.add(idx)
+          unique_group.append(word)
+      if len(unique_group) >= 2:
+        # Определяем, является ли слово служебным (по первому слову в группе)
+        parsed = morph.parse(unique_group[0]['word'])[0]
+        is_function_word = 'PREP' in parsed.tag or 'CONJ' in parsed.tag or 'PRCL' in parsed.tag
+        result.append({
+          'isFunctionWord': is_function_word,
+          'analyzerName': 'trigram',
+          'repeats': [{
+            'startPosition': w['start'],
+            'endPosition': w['end'],
+            'word': w['original']
+          } for w in sorted(unique_group, key=lambda x: x['word_index'])]
+        })
 
+  # Сортируем результат по позициям
   result.sort(key=lambda x: x['repeats'][0]['startPosition'])
   return result
