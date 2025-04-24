@@ -99,7 +99,7 @@ def find_matches(text, regex_patterns):
           'start': start_pos,
           'end': end_pos
         })
-
+  matches.sort(key=lambda x: x['start'])
   return matches
 
 def get_cliched_matches(text):
